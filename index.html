@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Escape Game</title>
+<link rel="stylesheet" href="css/style.css">
+
+<!-- Import map: lets us write "import * as THREE from 'three'" 
+     in our JS files instead of a long CDN URL every time -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+
+  <!-- Shown until the player clicks to lock the mouse and start playing -->
+  <div id="blocker">
+    <div id="instructions">
+      <p>Click to Play</p>
+      <p class="small">WASD to move &nbsp;|&nbsp; Mouse to look &nbsp;|&nbsp; ESC to pause</p>
+    </div>
+  </div>
+
+  <!-- Three.js will inject its <canvas> into the page via main.js -->
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

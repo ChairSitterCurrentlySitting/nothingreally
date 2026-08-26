@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>WASD Dot</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background: #111;
+    height: 100%;
+  }
+  #dot {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #4da6ff;
+    box-shadow: 0 0 15px #4da6ff;
+    left: 0;
+    top: 0;
+  }
+  #info {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    color: #aaa;
+    font-family: sans-serif;
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+
+<div id="info">Move with W A S D</div>
+<div id="dot"></div>
+
+<script>
+  const dot = document.getElementById('dot');
+
+  let x = window.innerWidth / 2;
+  let y = window.innerHeight / 2;
+  const speed = 4;
+  const dotSize = 30;
+
+  const keys = { w: false, a: false, s: false, d: false };
+
+  document.addEventListener('keydown', (e) => {
+    const key = e.key.toLowerCase();
+    if (key in keys) keys[key] = true;
+  });
+
+  document.addEventListener('keyup', (e) => {
+    const key = e.key.toLowerCase();
+    if (key in keys) keys[key] = false;
+  });
+
+  function update() {
+    if (keys.w) y -= speed;
+    if (keys.s) y += speed;
+    if (keys.a) x -= speed;
+    if (keys.d) x += speed;
+
+    // keep dot within window bounds
+    x = Math.max(0, Math.min(window.innerWidth - dotSize, x));
+    y = Math.max(0, Math.min(window.innerHeight - dotSize, y));
+
+    dot.style.left = x + 'px';
+    dot.style.top = y + 'px';
+
+    requestAnimationFrame(update);
+  }
+
+  update();
+</script>
+
+</body>
+</html>
