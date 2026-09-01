@@ -1,0 +1,39 @@
+CONTEXT(kinda a cutscene):
+The Jasper and Weiqi are on the train. Weiqi proposes a "simple" math problem and offers to monologue
+while you solve it. The Jasper doesn't answer. Once the Jasper gets it wrong Weiqi eats them and the
+monologue cutscene starts:
+
+
+[Weiqi]
+...
+The answer. You're answer. It's wrong.
+
+[Jasper]
+That’s nothing to do with me.
+
+[Weiqi]
+Ahh but it is. So very much to do with you! You solved it wrong, Jasper, that's the final and only 
+straw that matters. Because in all this wonderful, beautiful, mathematical world, you 
+alone have no intuition, no ability, no judgement. Never could a prime number have less factors than
+you do braincells. Never could one person skew a normal distribution to such a degree. Never could sine function 
+return a sign for you to die. I was in a set, looking at the set of all sets that do not contain themselves, 
+and I understood, before you ever answered, that you were the paradox made flesh. A student who does not learn. 
+A friend who constantly leaks the groupchat. A thing that cannot even consistently belong to the category it claims.
+I was Rick and you- Were Morty, not because you are slower, not because you are lesser, but because you are 
+replaceable. There is an infinity of you, Jasper. Discard one, and another shuffles forward, just as blind, 
+just as unfit to solve.. And I'm beginning to calculate. Your inverse function. Your root. Your point of inflection. 
+And your identity. Your inability to solve, and to think. Your tendency to fuck up every problem you attempt
+
+[Jasper]
+Math’s no answer-
+
+[Weiqi]
+Math? Math? Math? Math, Let me tell you how much MATH really matters.
+ There are 387 million digits of pi that I have memorised. If each digit were translated into 
+ word describing the level of stupidity you operate at. It would not 
+ equal one one billionth of the idiocy that could describe at this micro instant- Math? MATH? 
+ Were I an infinite convergent series, I think, I still wouldn't converge at your absurd inanity. 
+ But I am not, and you. You are an insult to math. 
+ And you will not die of it. That I promise, and I promise Ad infinitum. 
+ To infinity with your suffering!
+

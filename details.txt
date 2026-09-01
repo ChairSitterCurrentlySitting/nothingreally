@@ -1,9 +1,123 @@
 I'm using claude to help me create a baldi's basics style game set in our school
 
-The aim of the game:
-escape the school by collecting 
+The aim of the game: Jasper de Redemption
+escape the school by collecting 6 friends
+There's a chance a potential friend could be a spy working against you. As you gain more friends
+the possibility increases however the last friend has a 100% chance to be friendly.
+The main obstacle is Weiqi who bombs you with math questions and gets mad when you get then wrong
+
+About the player:
+- 5 inventory slots
+- 100 hp
+- 100 stamina
+- dash (if yash is friend 2 dash)
+- Name: jasper
+
+
+Potenial friendly NPCs and their locations:
+- Tiger (starting friend)
+- Marcus (found on top of bell curve)
+- Lucas (chud casa)
+- Yash (found in jail) 100% spy because he's simping for Kish To give him chance to be friend player must rescue Yash from Kish
+- Daniel (starting friend)
+- HT (found in Ikea)
+- Bruce (Becomes werewolf at night: swamp) (if killed reincarantes as a slime)
+- David (Found in basketball courts)
+- Austin (trapped in amazing digital circus)
+- Bryan (Homeless because broke from stock trading)
+- Gavin (Homeless with Bryan due to gambling)
+- Aaron (starting friend)
+
+Map:
+- Tuck shop
+- Basketball courts
+- Homeless street
+- Library/cc
+- Reception evil corridor backrooms 
+- Jail
+- Peart Toilet (chud casa)
+- Sweden
+- Forbidden Forest (swamp)
+- Amazing Digital Circus
+- Gym
+
+Description of potenial friend NPCs:
+#####Tiger#####
+How to befriend:
+
+Spy version:
+
+#####Marcus#####
+How to befriend:
+
+Spy version:
+
+
+
+Friendly teacher NPCs:
+- Mr Lee
+- Mr Zhai
+- Ms Yang
+- Mr Tucker
+- Mr Hotlz
+- Mr Samuel
+
+Evil bosses/obstacles:
+- Weiqi (Found library)
+- Michael Jing (Once defeated follows you around and nerfs you)
 
 random ideas:
-- enter into an undertale style battle with some npc
-- portal gun acts as among us vents
-- 
+- enter into an undertale style battle with friend to gain them
+- portal gun acts as among us vents.
+- Put the 6 friends on an infinity gauntlet
+- add the tf2 spy disguise kit to blend in for 10 seconds. 5 minute cooldown.
+- Death Note item
+- Pokemon: starting 3 friends choose one friend: every friend has a special ending
+- aaron starting friend ending: happy ending kinda (doesn't escape but live happily ever after with his sister in a false reality)
+- daniel starting friend ending: normal boss fight
+- tiger starting friend ending: Evil ending (mastermind that controls weiqi and extra boss to defeat and starts to turn ur friends evil)
+- if you choose to crack you end up in the world forever, if you dont choose to crack u get hunted down on ur escape (fight aaron's sister and weiqi)
+- 3d or 2d dependent
+- hard game (harder than sekiro and elden ring combined)
+- player spawns on the train with a dialog/cutscene with weiqi therefor we cant answer the question
+- sacrifise friend that you collected to respawn
+- there will be vending machines around locations that contain useful items such as 
+sour candy(Used to stall Weiqi because he eats it and need to recover from the sourness)
+and portal gun fluid.
+- There's a more rudementary way of teleportation in the form of enderpearls obtainable
+through the vending machine. These don't allow transport between disconnected locations
+but are able to gain the player distance from Weiqi
+- Money can be gained by pickpocketting in the tuckshop or finding it randomly generated
+around locations. Each location is guaranteed to spawn one so the player isn't softlocked
+- If the player is out of money and has no portal fluid then they can also sacrifice a friend in 
+exchange for fluid.
+- There's also domain expansions from jjk. E.g HT's expansion will be infinite Ikea, Gavin's domnain
+might be similar to Hikari's and Austin's domain might subject you to psychological torture of the amazing
+digital circus.
+- Collected friends transform into infinity stones(that's why you gotta collect 6) each provides a benefit
+e.g dash allows player to dash twice. Marcus could provide the personal trainer effect and improve physical start,
+Austin gives you alien hand syndrome allowing you to use an offhand slot, Tiger provides the placebo effect because
+you think he's your friend but just wait until the grand reveal. The placebo effect basically allows player to sprint 
+way past what their stamina can handle however once the effect wears off the player is unable to sprint or recover
+stamina for 2 minutes
+- Weiqi gets stronger and faster with each new friend you collect
+- The portal gun can have different modes because the setting is a memory after all. In assembly language there's direct
+and indirect addressing for memory locations. Maybe I can use this idea to build something different idk
+
+Weiqi's AI behaviour:
+- When you have no friends collected he moves at 90% the speed of the player but incrememnts by 5-8% with each friend the
+player collects(this applies to each fragment of Weiqi)
+- Weiqi doesn't know the player's exact location so he wonders aimlessly unless drawm in by specific events triggered by the
+player such as purchasing something from the vending machine or portal gun/enderpearl noises etc
+- Each fragment of Weiqi has same physical stats but different abilities. 
+- Each fragment of Weiqi is alerted to the player's initial entry into a new memory location and will rush to it.
+- Weiqi only starts chasing the player if a direct line of sight is established
+
+How the game starts:
+You're on the train with Weiqi and he is not in a good mood. You're asked a 
+difficult math problem which you are guaranteed to get wrong. This is the final straw; Weiqi snaps.
+He swallows you whole and you end up trapped inside within his mind. Each location is actually
+built from Weiqi's memories where a version of him hunts you down for your inability to solve his 
+math problem. However each versino of Weiqi is represents a different part of his soul. One may represent
+his pride, one his fear of spiders, one his Id, Ego and Superego etc.
+

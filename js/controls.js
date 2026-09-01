@@ -36,9 +36,9 @@ export function setupControls(camera, domElement) {
   });
 
   const velocity = new THREE.Vector3();
-  const SPEED = 6; // units per second
+  const SPEED = 4.845; // 6 * 0.85 * 0.95 — 15% then a further 5% slower than the original base speed
 
-  function update(delta) {
+  function update(delta, speedMultiplier = 1) {
     // Simple friction so movement feels smooth, not instant stop/start
     velocity.x -= velocity.x * 10 * delta;
     velocity.z -= velocity.z * 10 * delta;
@@ -48,8 +48,10 @@ export function setupControls(camera, domElement) {
     direction.x = Number(move.right) - Number(move.left);
     direction.normalize();
 
-    if (move.forward || move.backward) velocity.z -= direction.z * SPEED * 10 * delta;
-    if (move.left || move.right) velocity.x -= direction.x * SPEED * 10 * delta;
+    const speed = SPEED * speedMultiplier;
+
+    if (move.forward || move.backward) velocity.z -= direction.z * speed * 10 * delta;
+    if (move.left || move.right) velocity.x -= direction.x * speed * 10 * delta;
 
     // PointerLockControls gives us these helper methods to move
     // relative to where the camera is currently facing
@@ -57,5 +59,11 @@ export function setupControls(camera, domElement) {
     controls.moveForward(-velocity.z * delta);
   }
 
-  return { controls, update };
+  // True if any movement key is currently held — used by player.js to
+  // decide whether stamina is allowed to recover this frame.
+  function isMoving() {
+    return move.forward || move.backward || move.left || move.right;
+  }
+
+  return { controls, update, isMoving };
 }

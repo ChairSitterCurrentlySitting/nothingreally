@@ -1,15 +1,29 @@
-import * as THREE from 'three';
-
 // Detects whether the device supports touch input at all.
 // Used by main.js to decide whether to activate this module.
 export function isTouchDevice() {
   return ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
 }
 
-// rig    = the object that moves through the world (controls.getObject() from PointerLockControls)
-// camera = the actual camera, parented to rig, used for looking up/down
+// rig    = controls.getObject() from PointerLockControls — note this is
+//          actually the camera itself (Three.js's real PointerLockControls
+//          has no separate wrapper object), so rig and camera below are the
+//          same object. Kept as a separate parameter name for clarity about
+//          which role each usage plays (movement vs. look).
+// camera = the same object as rig, used here specifically for pitch (look up/down)
 // onTap  = called when the player taps (not drags) anywhere on screen — used for interaction (e.g. opening the door)
-export function setupTouchControls(rig, camera, onTap) {
+// onSprintToggle = called when the player taps the on-screen sprint button
+// onDashTrigger  = called when the player taps the on-screen dash button
+// onUseTrigger   = called when the player taps the on-screen use button
+export function setupTouchControls(rig, camera, onTap, onSprintToggle, onDashTrigger, onUseTrigger) {
+
+  // IMPORTANT: rig and camera are actually the SAME object — PointerLockControls'
+  // getObject() returns the camera directly, not a separate wrapper. Setting yaw
+  // (rotation.y) and pitch (rotation.x) independently on one object only composes
+  // correctly (no unwanted tilt) with 'YXZ' order — yaw applied outer, pitch
+  // inner — which matches how real FPS cameras work. This is now set globally
+  // in main.js (right after the camera is created), not here — it used to only
+  // be set on this touch-only code path, which left desktop reading a distorted
+  // camera.rotation.y (e.g. in dash.js) whenever there was any pitch.
 
   // --- Build on-screen UI elements ---
   // Left half of the screen: joystick for movement
@@ -31,6 +45,59 @@ export function setupTouchControls(rig, camera, onTap) {
   lookZone.id = 'look-zone';
   document.body.appendChild(lookZone);
 
+  // Bottom-right: sprint toggle button. It needs a higher stacking order
+  // than look-zone underneath it — browsers hit-test to whichever element
+  // is visually on top at a given point, so as long as this renders above
+  // look-zone (see z-index in style.css), touches on the button correctly
+  // hit the button rather than triggering a look-drag.
+  const sprintButton = document.createElement('button');
+  sprintButton.id = 'sprint-button';
+  sprintButton.type = 'button';
+  sprintButton.textContent = 'SPRINT';
+  document.body.appendChild(sprintButton);
+
+  sprintButton.addEventListener('touchstart', (e) => {
+    e.preventDefault(); // avoids the ~300ms ghost-click delay/double-fire some mobile browsers add
+    if (onSprintToggle) onSprintToggle();
+  }, { passive: false });
+
+  // Dash button, positioned just to the left of the sprint button —
+  // same reasoning applies: higher z-index than #look-zone underneath it
+  // so touches here hit the button, not a look-drag.
+  const dashButton = document.createElement('button');
+  dashButton.id = 'dash-button';
+  dashButton.type = 'button';
+  dashButton.textContent = 'DASH';
+  document.body.appendChild(dashButton);
+
+  dashButton.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    if (onDashTrigger) onDashTrigger();
+  }, { passive: false });
+
+  // Use button, positioned just to the left of the dash button — same
+  // z-index reasoning as the other two buttons. Shows the currently
+  // selected inventory slot's item icon as its background (or a
+  // placeholder if the slot is empty — see updateUseButtonIcon), with a
+  // small "USE" label in the corner, same icon+badge pattern as the
+  // inventory slots in ui.js. Always visible — no hide/disable state,
+  // unlike the dash button's cooldown-based opacity.
+  const useButton = document.createElement('button');
+  useButton.id = 'use-button';
+  useButton.type = 'button';
+
+  const useLabel = document.createElement('span');
+  useLabel.className = 'use-button-label';
+  useLabel.textContent = 'USE';
+  useButton.appendChild(useLabel);
+
+  document.body.appendChild(useButton);
+
+  useButton.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    if (onUseTrigger) onUseTrigger();
+  }, { passive: false });
+
   // --- Tap detection (a quick touch with barely any movement = interact, not drag) ---
   const TAP_MAX_DURATION = 300; // ms
   const TAP_MAX_DISTANCE = 10;  // px
@@ -43,7 +110,7 @@ export function setupTouchControls(rig, camera, onTap) {
 
   // --- Joystick movement ---
   const JOYSTICK_RADIUS = 50; // px the knob can travel from center
-  const SPEED = 6;            // units per second, same as desktop
+  const SPEED = 4.845;         // 6 * 0.85 * 0.95 — 15% then a further 5% slower, matches desktop
 
   let joystickTouchId = null;
   let joystickOrigin = { x: 0, y: 0 };
@@ -151,13 +218,55 @@ export function setupTouchControls(rig, camera, onTap) {
   lookZone.addEventListener('touchcancel', resetLook);
 
   // --- Per-frame movement update, called from main.js's animate loop ---
-  function update(delta) {
-    const forward = -move.y; // dragging up = forward
-    const right = move.x;
+  function update(delta, speedMultiplier = 1) {
+    const forwardInput = -move.y; // dragging up = forward
+    const rightInput = move.x;
 
-    if (Math.abs(forward) > 0.05) rig.translateZ(-forward * SPEED * delta);
-    if (Math.abs(right) > 0.05) rig.translateX(right * SPEED * delta);
+    if (Math.abs(forwardInput) < 0.05 && Math.abs(rightInput) < 0.05) return;
+
+    // Move along the horizontal plane only, based on yaw (rig.rotation.y) —
+    // deliberately ignoring pitch entirely. This is what stops the no-clip
+    // bug: previously we used rig.translateZ/translateX, which move along
+    // wherever the camera is actually facing in full 3D, pitch included —
+    // so looking down and moving forward walked you into the floor.
+    const yaw = rig.rotation.y;
+    const sin = Math.sin(yaw);
+    const cos = Math.cos(yaw);
+    const speed = SPEED * speedMultiplier;
+
+    const dx = (-sin * forwardInput + cos * rightInput) * speed * delta;
+    const dz = (-cos * forwardInput - sin * rightInput) * speed * delta;
+
+    rig.position.x += dx;
+    rig.position.z += dz;
   }
 
-  return { update };
+  // Reflects current sprint state on the on-screen button. Visual only —
+  // main.js owns the real player state; this just syncs how the button looks.
+  function updateSprintButton(isActive) {
+    sprintButton.classList.toggle('active', isActive);
+  }
+
+  // Reflects whether a dash is currently available (not dashing, not on
+  // cooldown). Visual only — main.js owns the real dash state.
+  function updateDashButton(isAvailable) {
+    dashButton.classList.toggle('unavailable', !isAvailable);
+  }
+
+  // Sets the Use button's icon to match the currently selected inventory
+  // slot's item, or clears it (no background image — same convention as
+  // the desktop inventory slots in ui.js) if that slot is empty.
+  function updateUseButtonIcon(inventoryState) {
+    const item = inventoryState.slots[inventoryState.selectedIndex];
+    useButton.style.backgroundImage = item ? `url('${item.icon}')` : '';
+  }
+
+  // True if the joystick is currently pushed past the same dead-zone
+  // threshold used in update() — used by player.js to decide whether
+  // stamina is allowed to recover this frame.
+  function isMoving() {
+    return Math.abs(move.x) > 0.05 || Math.abs(move.y) > 0.05;
+  }
+
+  return { update, updateSprintButton, updateDashButton, updateUseButtonIcon, isMoving };
 }
