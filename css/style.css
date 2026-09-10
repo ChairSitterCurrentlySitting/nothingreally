@@ -181,6 +181,19 @@ canvas {
   white-space: nowrap;
 }
 
+#cheat-debug-panel {
+  position: fixed;
+  top: 152px; /* just below #cheat-indicator */
+  right: 16px;
+  z-index: 15;
+  max-width: 340px;
+  color: #7fd4ff;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+  text-align: right;
+}
+
 /* --- Sprint button (mobile only, created in touchControls.js) --- */
 
 #sprint-button {
@@ -343,4 +356,187 @@ canvas {
 
 #viewmodel-hand.walking {
   animation: hand-wobble 1.1s ease-in-out infinite; /* was 0.5s — more than double the duration */
+}
+
+/* --- Settings menu (Escape on desktop, mobile pause icon top-center) ---
+   Empty for now except a Resume button, per the request. */
+
+#settings-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: none; /* toggled via JS — settingsMenu.js's open()/close() */
+  align-items: center;
+  justify-content: center;
+  z-index: 50; /* above everything else in the game, including all HUD/buttons (which top out at 25) */
+}
+
+#settings-panel {
+  width: 320px;
+  max-width: 80vw;
+  min-height: 220px;
+  background: #1a1a1a;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 24px;
+}
+
+#settings-title {
+  color: #fff;
+  font-family: 'Courier New', monospace;
+  font-size: 22px;
+  margin: 0;
+}
+
+#settings-resume-button {
+  background: #ffcc00;
+  border: none;
+  color: #1a1a1a;
+  font-family: 'Courier New', monospace;
+  font-size: 16px;
+  font-weight: bold;
+  padding: 12px 32px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+#settings-resume-button:hover {
+  background: #ffdd44;
+}
+
+/* --- Travel menu (portal gun destination picker) — same visual family
+   as the settings menu, since both are full-screen modal overlays. */
+
+#travel-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: none; /* toggled via JS — travelMenu.js's open()/close() */
+  align-items: center;
+  justify-content: center;
+  z-index: 50; /* same as #settings-overlay — only one modal is ever open at a time in practice */
+}
+
+#travel-panel {
+  width: 320px;
+  max-width: 80vw;
+  max-height: 70vh;
+  overflow-y: auto;
+  background: #1a1a1a;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+}
+
+#travel-title {
+  color: #fff;
+  font-family: 'Courier New', monospace;
+  font-size: 22px;
+  margin: 0;
+  text-align: center;
+}
+
+#travel-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.travel-option {
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  font-family: 'Courier New', monospace;
+  font-size: 15px;
+  font-weight: bold;
+  padding: 12px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.travel-option:hover:not(:disabled) {
+  background: rgba(255, 204, 0, 0.2);
+  border-color: #ffcc00;
+}
+
+.travel-option.current {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* --- Pause icon (mobile only, top-center, created in touchControls.js) ---
+   Two plain CSS bars rather than a text label or unicode symbol, so it
+   renders identically regardless of device/font. */
+
+#pause-button {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  z-index: 25; /* same as sprint/dash/use buttons — above #look-zone underneath it */
+  touch-action: none;
+}
+
+.pause-bar {
+  width: 5px;
+  height: 18px;
+  background: #fff;
+  border-radius: 1px;
+}
+
+/* --- Crosshair: exact screen-center marker, used for aiming/coordinate
+   precision (debug inspector, door interaction). Filled "+" shape via
+   two pseudo-element bars — no center gap, keeps it simple. */
+
+#crosshair {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 16px;
+  height: 16px;
+  z-index: 20;
+  pointer-events: none; /* never intercepts clicks meant for whatever's underneath */
+}
+
+#crosshair::before,
+#crosshair::after {
+  content: '';
+  position: absolute;
+  background: #fff;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.9); /* legible over any background */
+}
+
+#crosshair::before { /* horizontal bar */
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  transform: translateY(-50%);
+}
+
+#crosshair::after { /* vertical bar */
+  left: 50%;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  transform: translateX(-50%);
 }

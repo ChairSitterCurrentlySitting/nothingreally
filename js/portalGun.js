@@ -98,10 +98,14 @@ export function setupPortalGun(scene, camera) {
     return Boolean(selected && selected.name === 'Portal Gun');
   }
 
-  // Call from the 'U' keydown handler or the mobile Use button (main.js's tryUsePortalGun()).
+  // Call from the 'U' keydown handler or the mobile Use button (main.js's tryUseSelectedItem()).
+  // Returns true if a swirl actually spawned, false if blocked (wrong
+  // item selected, or still on cooldown) — main.js uses this to decide
+  // whether to also open the travel menu, so a cooldown-blocked press
+  // doesn't pop the menu open with nothing having actually happened.
   function trySpawnSwirl(inventoryState) {
-    if (!isHoldingPortalGun(inventoryState)) return;
-    if (cooldownRemaining > 0) return;
+    if (!isHoldingPortalGun(inventoryState)) return false;
+    if (cooldownRemaining > 0) return false;
 
     // Horizontal direction only (yaw), deliberately ignoring pitch
     // entirely — was previously camera.getWorldDirection() (full 3D,
@@ -151,6 +155,7 @@ export function setupPortalGun(scene, camera) {
       noiseSeed: Math.random() * 100, // random phase so simultaneous swirls don't pulse in lockstep
     });
     cooldownRemaining = USE_COOLDOWN;
+    return true;
   }
 
   // Called every frame (while the game isn't paused).

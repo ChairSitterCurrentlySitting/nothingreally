@@ -53,15 +53,6 @@ How to befriend:
 Spy version:
 
 
-
-Friendly teacher NPCs:
-- Mr Lee
-- Mr Zhai
-- Ms Yang
-- Mr Tucker
-- Mr Hotlz
-- Mr Samuel
-
 Evil bosses/obstacles:
 - Weiqi (Found library)
 - Michael Jing (Once defeated follows you around and nerfs you)
@@ -103,6 +94,9 @@ stamina for 2 minutes
 - Weiqi gets stronger and faster with each new friend you collect
 - The portal gun can have different modes because the setting is a memory after all. In assembly language there's direct
 and indirect addressing for memory locations. Maybe I can use this idea to build something different idk
+- rorschach jigsaw + sanity meter as a joke
+
+
 
 Weiqi's AI behaviour:
 - When you have no friends collected he moves at 90% the speed of the player but incrememnts by 5-8% with each friend the

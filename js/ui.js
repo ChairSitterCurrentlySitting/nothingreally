@@ -8,6 +8,13 @@
 // with no separate touch-handling code needed, since 'click' fires for
 // both input types in the browser.
 export function setupHUD(onSlotSelect) {
+  // --- Crosshair: always visible, marks the exact screen-center point
+  // used by every raycast-based interaction (door toggle, debug
+  // inspector). Purely static — no per-frame update needed, ever.
+  const crosshair = document.createElement('div');
+  crosshair.id = 'crosshair';
+  document.body.appendChild(crosshair);
+
   const container = document.createElement('div');
   container.id = 'hud';
   container.innerHTML = `

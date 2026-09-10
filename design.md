@@ -52,8 +52,12 @@ escape-game/
 │   ├── world.js           # Builds level geometry (cube room with a door) —
 │   │                        currently NOT active; see note below
 │   ├── locations/
-│   │   └── ikea.js        # First real location module (walls only, no
-│   │                        props yet). See "Location module system" below.
+│   │   ├── ikea.js        # Location module (walls only, no props yet).
+│   │   │                    See "Location module system" below.
+│   │   └── digitalCircus.js # Loads a fan-made GLB model — currently the
+│   │                          DEFAULT/active location. Async loading,
+│   │                          heuristic (height-based) collision. See its
+│   │                          own header comment.
 │   ├── player.js          # HP, stamina, and sprint state/logic
 │   ├── objects.js         # (not yet implemented) collectible item definitions
 │   ├── interaction.js     # Raycast from screen center; used to detect "looking at the door"
@@ -62,7 +66,9 @@ escape-game/
 │   ├── ui.js               # HP/stamina HUD bars
 │   ├── dash.js             # Dash burst-movement mechanic
 │   ├── cheats.js           # Desktop-only cheat/debug tools (fly, etc.)
-│   ├── portalGun.js        # Right-click swirl spawn/despawn (visual only, no travel yet)
+│   ├── settingsMenu.js     # Pause/settings overlay (Escape / mobile pause icon)
+│   ├── travelMenu.js       # Portal gun destination picker (see main.js's travelTo)
+│   ├── portalGun.js        # Right-click swirl spawn/despawn; a genuine use also opens the travel menu (see travelMenu.js/main.js)
 │   └── inventory.js        # 3-slot inventory hotbar (slot 3 holds the Portal Gun item)
 ├── assets/
 │   ├── models/           # for future .glb imports (Blender exports)
@@ -74,6 +80,85 @@ escape-game/
 ---
 
 ## Features Built So Far
+
+- [x] Settings/pause menu (`settingsMenu.js`): Escape (desktop) or a new
+      pause icon top-center (mobile only, two plain CSS bars rather than
+      text/unicode so it renders identically across devices). Empty except
+      a "Paused" title and a Resume button, per the request — no actual
+      settings yet. Genuinely pauses everything on both platforms, not
+      just desktop: `isPaused` in `main.js` now reads
+      `(!onTouchDevice && !controls.isLocked) || settingsMenu.state.isOpen`
+      — the first term is the pre-existing desktop pointer-lock check
+      (unchanged), the second is new and covers mobile, which previously
+      had **no pause mechanism at all** (touch devices skip pointer lock
+      entirely, so the old `isPaused` was structurally incapable of ever
+      being true there).
+      **Real architecture change, not just an addition:** the original
+      "Click to Play" blocker used to reappear on every pointer-lock
+      `unlock` event (i.e. every Escape press), doubling as a de facto
+      pause screen despite being worded for first-launch only. That
+      `unlock`→show-blocker listener was removed from `controls.js`
+      entirely — blocker now only ever appears once, for the genuine
+      first launch. Every subsequent Escape press opens the settings menu
+      instead (`main.js` listens for the same `unlock` event and calls
+      `settingsMenu.open()`), and clicking Resume (or pressing Escape
+      again while the menu is open, handled explicitly since Escape's
+      auto-unlock only fires while pointer lock is actually active) closes
+      it and re-engages pointer lock on desktop via `onResume`.
+      **Fixed a real softlock bug found right after launch:** Resume
+      originally closed the menu *optimistically*, immediately on click,
+      before actually knowing whether pointer lock would successfully
+      re-engage. Browsers enforce a brief cooldown after an
+      Escape-triggered unlock before allowing a programmatic re-lock (a
+      security measure stopping sites from instantly re-trapping the
+      cursor) — clicking Resume quickly enough to hit that cooldown caused
+      the request to be silently rejected, leaving the menu gone,
+      `isLocked` still false, the game still paused, and — since the old
+      blocker no longer exists to click as a fallback — no remaining way
+      to resume at all. Fixed by making the menu close reactively: it now
+      only actually closes once a genuine `'lock'` event fires (confirming
+      real success), not the instant Resume is clicked. Mobile has no
+      lock event to react to at all, so its path closes the menu directly
+      instead — the fix is specifically about not doing that unconditionally
+      on desktop too.
+
+- [x] Travel menu (`travelMenu.js`) — using the Portal Gun (a genuine use,
+      not one blocked by cooldown) freezes the game and opens a list of
+      known locations (currently Ikea and Digital Circus); clicking one
+      other than the current location travels there. **This is the first
+      thing in the project that actually swaps the active location at
+      runtime** — `world` in `main.js` used to be a `const` set once at
+      startup; it's now a `let`, reassigned by `travelTo()`. Every other
+      system that touches `world` (collision, door interaction) already
+      read it fresh each time rather than capturing a snapshot, so this
+      needed no other wiring to pick up correctly.
+      `LOCATIONS` (`main.js`) is a small registry mapping a key to a
+      `{ label, build }` pair — add a new location here once it's built to
+      make it travel-menu-reachable. The original cube-room test level
+      (`world.js`) isn't in the registry — its `buildWorld(scene)` takes a
+      different signature (adds directly to a scene rather than returning
+      a self-contained group) and hasn't been retrofitted to match.
+      **Coordinating two menus that both need pointer lock was the real
+      complexity here.** Opening the travel menu needs the cursor visible
+      (so its buttons are clickable), which means unlocking pointer lock
+      on desktop — but that's the exact same `'unlock'` event the settings
+      menu already reacts to, so without extra handling, opening the
+      travel menu would pop the settings menu open too. Fixed with a
+      `suppressNextSettingsOpen` flag, set right before the travel-menu-
+      triggered unlock and consumed by the `'unlock'` listener. The
+      reverse direction (a `'lock'` event closing things back down)
+      already needed no such guard — both menus just close on it.
+      `travelTo()` reuses the settings-menu softlock lesson directly:
+      switching the location itself happens immediately and
+      unconditionally, but closing the menu / resuming control does not —
+      mobile closes directly (no lock concept), desktop attempts
+      `controls.lock()` and lets the real `'lock'` event close the menu,
+      exactly like Resume does.
+      **Known gaps, not fixed in this pass:** switching locations doesn't
+      dispose of the old location's geometry/materials/textures — repeated
+      travel over a long play session would leak GPU memory. Spawn
+      position after traveling is a fixed default (`(0, 1.6, 5)`, facing
+      forward), not a real per-location spawn point.
 
 - [x] Viewmodel hand: a screen-space (not 3D-world) image pinned to the
       bottom-right corner via CSS `right: 0; bottom: 0`, created in `ui.js`
@@ -96,9 +181,20 @@ escape-game/
       outside the pause-gated block in `main.js` (defaulting `false`) so
       the wobble correctly freezes on pause too, without needing a separate
       pause check of its own.
-      **Source image swapped from `idle_hand.png` to `_.jpeg`** — same
-      element/behavior, just pointing at a different file
-      (`assets/textures/ui/_.jpeg`) now.
+      **Empty-use reaction:** normal source is `idle_hand.png`; briefly
+      swaps to `_.jpeg` for 500ms (`EMPTY_USE_FLASH_DURATION`) whenever
+      the player presses U/Use while the selected inventory slot is
+      empty, then automatically reverts (`ui.js`'s `flashEmptyHandIcon`,
+      triggered from `main.js`'s `tryUseSelectedItem`). Re-triggering
+      before the previous flash finishes restarts the timer rather than
+      stacking multiple reverts. Does NOT trigger for "item selected but
+      on cooldown" (e.g. Portal Gun mid-cooldown) — only genuinely empty
+      slots — since that's a different situation (you have an item, it's
+      just temporarily unavailable) from having nothing at all. An
+      earlier version of this made `_.jpeg` the hand's permanent default
+      image regardless of state, which was a real behavioral mismatch
+      with the intended "brief reaction to one specific situation," not
+      just a filename mix-up — corrected here.
 
 - [x] Inventory hotbar: 3 slots, top-right corner, 96×96px each (doubled
       from an initial 48px). Desktop: keys 1/2/3 select a slot. Mobile:
@@ -123,8 +219,11 @@ escape-game/
       disable state.
 - [x] Portal gun spawn effect (`portalGun.js`): **U key** (desktop) or the
       mobile **Use button** (rebound from an initial right-click, which was
-      awkward on a Mac trackpad — `main.js`'s `tryUsePortalGun()` is the
-      single shared trigger both input paths call) — while the Portal Gun
+      awkward on a Mac trackpad — `main.js`'s `tryUseSelectedItem()` is the
+      single shared trigger both input paths call, and also handles the
+      empty-slot hand-flash reaction described in the Viewmodel hand entry
+      above, checking for an empty slot before dispatching to any
+      item-specific logic) — while the Portal Gun
       is the selected inventory slot, spawns a billboarded swirl sprite
       (`THREE.Sprite`, always faces the camera) 4 meters in front of the
       player, **horizontally** — direction is yaw-only, deliberately
@@ -186,8 +285,10 @@ escape-game/
       crop needs real alpha transparency that JPG can't provide. Displayed
       at 3.15m tall (compounded from an original 1.5m through two separate
       size increases), with width derived from the source's real 1183:2560
-      aspect ratio rather than forced into a square. **No portal travel
-      yet — visual spawn/despawn only.**
+      aspect ratio rather than forced into a square. **Now also opens the
+      travel menu on a genuine use** (not a cooldown-blocked press) — see
+      the Travel menu entry below for the actual location-switching
+      mechanics; this swirl remains purely the visual flourish alongside it.
 
 - [x] Cheat mode (`cheats.js`), desktop-only — mobile intentionally not
       supported yet. `=` toggles cheat mode on/off. While active,
@@ -208,27 +309,107 @@ escape-game/
       A small "CHEATS ON" / "CHEATS: FLYING X% speed" indicator shows
       top-right whenever cheat mode is active, self-managed inside
       `cheats.js`. Designed to be extended with more cheats later.
+      **Stopping flight now triggers a simple fall**, not an instant stop
+      in midair — `stopFlying()` starts a basic gravity simulation
+      (`GRAVITY`/`EYE_HEIGHT` constants) that pulls the player down to the
+      standard eye-height (1.6), assuming a flat floor at Y=0 (same
+      assumption the rest of the project already makes, e.g. `portalGun.js`'s
+      `GROUND_Y`). Both places that can stop flying (the Space double-tap,
+      and turning cheat mode off entirely) route through this same helper
+      now, so neither one silently skips the fall. This is a real
+      simplification, not full gravity — it always falls to the flat
+      assumed ground level regardless of what's actually underneath, since
+      there's no way to detect true floor height yet (see the vertical
+      collision item in Features Planned).
+      **Debug inspector**, added specifically to support mapping out exact
+      coordinates for `digitalCircus.js`'s manual collision boxes and
+      finding good spawn points without needing to correlate a screenshot
+      against a bulk console dump by eye: while cheat mode is active, a
+      panel below the main indicator continuously shows the player's exact
+      world position and the name of whatever mesh is currently under the
+      crosshair (reusing `interaction.js`'s existing `raycastFromCenter` —
+      the same raycast the door-interaction system already uses, not a
+      separate one). Left-clicking while cheat mode is active additionally
+      logs that mesh's full name/size/world-position to the console
+      (`[debug inspect] ...` lines) for easy reference when filling in
+      `digitalCircus.js`'s `MANUAL_COLLISION_BOXES`.
 
-- [x] Ikea location (`js/locations/ikea.js`) — first real location module,
-      walls only (no props/detail yet). Layout is a simplified rectangular
-      grid translated from a provided floor plan photo, proportions
+- [x] Crosshair (`ui.js`): a small "+" fixed at exact screen-center,
+      marking the point every raycast-based interaction (door toggle,
+      debug inspector) actually aims from. Purely static — created once,
+      no per-frame update ever needed, unlike almost everything else in
+      the HUD.
+
+- [x] Ikea location (`js/locations/ikea.js`) — walls only (no
+      props/detail yet). Layout is a simplified rectangular grid
+      translated from a provided floor plan photo, proportions
       approximated rather than pixel-matched. Walls between rooms that
       connect along the intended shopping path have an open doorway gap
       (~3 units wide); the south wall has a wider gap for the Showroom
-      Entrance. Establishes the location-module pattern going forward: a
+      Entrance. Established the location-module pattern followed since: a
       `buildX()` function returns `{ group, walls, ... }` — a self-contained
       `THREE.Group`, not added to a scene itself — so a future level
       manager can add/remove it wholesale when the player travels.
-      **`main.js` is currently previewing Ikea instead of the cube room**
-      (temporary, clearly commented at the swap point) — the cube room in
-      `world.js` still exists and works, it's just not the active location
-      right now. Swap `const world = ikea; scene.add(ikea.group);` back to
-      `const world = buildWorld(scene);` to return to it.
+      **No longer the active/default location** — see the Digital Circus
+      entry below, currently active instead. Ikea still exists and works
+      unchanged, just isn't what loads by default right now.
       `collision.js` was made defensive to support door-less locations as
       part of this (`getCollidableBoxes` now checks `world.door &&
       world.doorPivot` before touching them, rather than assuming every
       location has a door — this was a real crash risk, not just a style
       nit, since accessing `.userData` on an undefined `doorPivot` throws).
+
+- [x] Digital Circus location (`js/locations/digitalCircus.js`) —
+      **currently the default/active location main.js loads into.** Loads
+      a fan-made GLB model (`assets/models/the_digital_circus.glb`, not
+      original geometry like the other locations) via `GLTFLoader`
+      (bundled Three.js addon, already covered by the existing
+      `three/addons/` import map alias — no `index.html` changes needed).
+      A real, meaningful decision this project moved away from
+      recommending: an *original* low-poly interpretation was the
+      initial suggestion (copyright reasons — this is a specific,
+      currently-running, popular copyrighted show, a step beyond the
+      "keep the mechanic, drop the coined term" fixes used elsewhere in
+      this project), but the user opted to use a downloaded fan-made
+      model instead, explicitly accepting that risk for a joke game even
+      on a public repo.
+      **Asynchronous loading — a genuinely different pattern from every
+      other location module.** `world.js`/`ikea.js` build all their
+      geometry synchronously and return a fully-populated group
+      immediately; a GLB has to actually download and parse first. This
+      module returns an EMPTY group right away (which `main.js` adds to
+      the scene immediately, unchanged from the sync pattern), and the
+      loaded model is added as a child of that same group once loading
+      finishes — it just pops in when ready, rather than requiring
+      `main.js`'s otherwise fully-synchronous startup to become
+      async-aware.
+      **Collision: manual, coordinate-defined — replaced the earlier
+      automatic height-based heuristic entirely, per explicit request.**
+      The heuristic (classify every mesh by height, auto-include tall
+      ones) is gone completely — `MANUAL_COLLISION_BOXES` is now the ONLY
+      source of collision for this location: a plain array of
+      `{ minX, maxX, minZ, maxZ }` entries (optionally `minY`/`maxY` too,
+      though only X/Z are actually used for real collision, since the
+      whole collision system is 2D top-down — Y bounds just size the
+      debug-visualization box below), filled in manually as coordinates
+      are mapped out using the cheat-mode debug inspector (see below) and
+      crosshair. Each box is built as a real `THREE.Mesh` (translucent red
+      wireframe, always visible for now — not gated behind cheat mode) so
+      placement can be checked against the actual model geometry, and is
+      pushed into `walls` — `collision.js` needed zero changes, since it
+      already just calls `Box3().setFromObject()` on whatever's in that
+      array regardless of where the mesh came from.
+      **Scale/position/rotation are unverified.** `MODEL_SCALE`/
+      `MODEL_POSITION`/`MODEL_ROTATION_Y` start at a no-adjustment default
+      (scale 1, no offset, no rotation) — fan-made models can be built at
+      very different scales/orientations than this project's convention
+      (~1 unit ≈ 1 meter, Y-up), so this will very likely need tuning once
+      it's actually visible relative to the fixed player spawn point
+      (camera starts at `(0, 1.6, 5)`).
+      If loading ever fails, check the console — one specific thing worth
+      knowing in advance: a file exported with Draco mesh compression
+      needs a `DRACOLoader` configured alongside `GLTFLoader`, which
+      isn't set up here since it's unknown whether this file needs it.
 
 - [x] Basic Three.js scene: enclosed cube-shaped room (floor, ceiling, 4 walls,
       10×10 footprint, 4 units tall) with a door on the far wall, ambient +
@@ -297,6 +478,14 @@ escape-game/
 
 ## Features Planned (not yet built)
 
+- [ ] Vertical collision / step-up (stairs, ramps, elevation changes) — the
+      entire collision system is currently 2D top-down (X/Z only), with no
+      awareness of height at all. The player's camera Y is fixed at 1.6m
+      and never changes except via the fly cheat; there's no walking-up-
+      stairs mechanic, no step detection, nothing. This came up wanting
+      "functional stairs" in the Digital Circus model — that's not a
+      hitbox-accuracy problem the existing collision heuristic can solve,
+      it needs this as a genuinely separate system built first.
 - [ ] Data-driven map/level layout (JSON or grid-based, replacing the single
       hardcoded wall in `world.js`)
 - [ ] Collectible objects placed in the scene (`objects.js`)
@@ -306,16 +495,15 @@ escape-game/
 - [ ] Sprite billboard system for NPCs/items — flat 2D images that always
       face the camera (`THREE.Sprite`, or a plane with a per-frame
       lookAt-camera update)
-- [x] Location module system, first pass: `js/locations/ikea.js` establishes
+- [x] Location module system, first pass: `js/locations/ikea.js` established
       the pattern — a location module builds and returns a self-contained
       `THREE.Group` (plus a `walls` array, matching `world.js`'s existing
       return shape so `collision.js` works unchanged), and does NOT take a
       `scene` parameter — the caller decides when to add/remove it.
-- [ ] Level manager: actually swap locations in/out of the scene (portal
-      gun, doors between locations, etc.) — the location-module *shape*
-      exists (see above) but nothing adds/removes a location's group at
-      runtime yet. Only one location can be "active" right now, chosen by
-      which `buildX()` call `main.js` happens to use.
+      `digitalCircus.js` follows the same returned shape but had to adapt
+      the pattern for asynchronous loading (see its own entry above) —
+      the group is returned empty and populated once its GLB finishes
+      loading, rather than fully built before returning.
 - [ ] Sound effects / ambient audio
 
 ---
@@ -352,6 +540,20 @@ escape-game/
 ---
 
 ## Debugging Notes / Gotchas
+
+- **Browsers reject programmatic pointer-lock re-requests for a brief
+  cooldown right after an Escape-triggered unlock — a deliberate security
+  measure, not a bug to work around, that stops a site from instantly
+  re-trapping the cursor the moment a user tries to escape it.** Any
+  "click a button to resume" flow that calls `.lock()` needs to treat that
+  call as something that might silently fail, not something guaranteed to
+  succeed. More generally: don't update UI state (closing a menu, hiding
+  an overlay) optimistically based on an action that *might* fail — wait
+  for confirmation the action actually succeeded (here, a real `'lock'`
+  event) before reflecting it as done. Optimistic-close-then-request
+  caused a genuine softlock in this project (see the settings-menu entry
+  above) — the UI said "resumed" while the game stayed paused underneath,
+  with nothing left to click to retry.
 
 - **A duplicate `position` declaration in the same CSS rule silently
   breaks positioning — the later one wins, with no warning.** Adding

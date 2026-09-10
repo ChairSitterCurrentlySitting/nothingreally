@@ -9,10 +9,14 @@ export function setupControls(camera, domElement) {
   const blocker = document.getElementById('blocker');
   const instructions = document.getElementById('instructions');
 
-  // Click the overlay to lock the mouse pointer and start playing
+  // Click the overlay to lock the mouse pointer and start playing.
+  // Note: blocker is only ever shown for this initial "click to play"
+  // moment — it does NOT reappear on subsequent unlocks (e.g. pressing
+  // Escape mid-game). That's now the settings menu's job (see main.js),
+  // which is a deliberate change from the original behavior of reusing
+  // this same "Click to Play" blocker as the pause screen too.
   blocker.addEventListener('click', () => controls.lock());
   controls.addEventListener('lock', () => { blocker.style.display = 'none'; });
-  controls.addEventListener('unlock', () => { blocker.style.display = 'flex'; });
 
   // Track which movement keys are currently held down
   const move = { forward: false, backward: false, left: false, right: false };

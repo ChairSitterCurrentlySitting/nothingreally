@@ -14,7 +14,8 @@ export function isTouchDevice() {
 // onSprintToggle = called when the player taps the on-screen sprint button
 // onDashTrigger  = called when the player taps the on-screen dash button
 // onUseTrigger   = called when the player taps the on-screen use button
-export function setupTouchControls(rig, camera, onTap, onSprintToggle, onDashTrigger, onUseTrigger) {
+// onPause        = called when the player taps the on-screen pause icon (top-center)
+export function setupTouchControls(rig, camera, onTap, onSprintToggle, onDashTrigger, onUseTrigger, onPause) {
 
   // IMPORTANT: rig and camera are actually the SAME object — PointerLockControls'
   // getObject() returns the camera directly, not a separate wrapper. Setting yaw
@@ -96,6 +97,21 @@ export function setupTouchControls(rig, camera, onTap, onSprintToggle, onDashTri
   useButton.addEventListener('touchstart', (e) => {
     e.preventDefault();
     if (onUseTrigger) onUseTrigger();
+  }, { passive: false });
+
+  // Pause icon, top-center — the mobile equivalent of desktop's Escape
+  // key, since touch devices have no pointer-lock/Escape pause mechanism
+  // at all. Built from two plain CSS bars (not a text label or unicode
+  // symbol) so it renders identically regardless of device/font.
+  const pauseButton = document.createElement('button');
+  pauseButton.id = 'pause-button';
+  pauseButton.type = 'button';
+  pauseButton.innerHTML = '<span class="pause-bar"></span><span class="pause-bar"></span>';
+  document.body.appendChild(pauseButton);
+
+  pauseButton.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    if (onPause) onPause();
   }, { passive: false });
 
   // --- Tap detection (a quick touch with barely any movement = interact, not drag) ---
